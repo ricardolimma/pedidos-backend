@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: Pedidos API
+  version: 1.0.0
+servers: [{ url: http://localhost:8080 }]
+paths:
+  /api/pedidos:
+    post:
+      summary: Cria pedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NovoPedido' }
+      responses:
+        '202':
+          description: Aceito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+        '400': { description: Dados inválidos }
+  /api/pedidos/status/{id}:
+    get:
+      summary: Consulta status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Status atual
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusPedido'
+components:
+  schemas:
+    NovoPedido:
+      type: object
+      required: [produto, quantidade]
+      properties:
+        produto: { type: string, minLength: 1 }
+        quantidade: { type: integer, minimum: 1 }
+    StatusPedido:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [DESCONHECIDO, RECEBIDO, PROCESSANDO, SUCESSO, FALHA]
