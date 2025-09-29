@@ -1,0 +1,54 @@
+# ==== Server/App ====
+server:
+  port: 8080
+
+spring:
+  application:
+    name: pedidos-backend
+
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+    default-property-inclusion: non_null
+
+  # ==== RabbitMQ (CloudAMQP) ====
+  rabbitmq:
+    host: jaragua-01.lmq.cloudamqp.com
+    port: 5672
+    username: bjnuffmq
+    password: "gj-YQIiEXyfxQxjsZtiYDKeXIT8ppUq7"
+    virtual-host: bjnuffmq
+    listener:
+      simple:
+        default-requeue-rejected: false  # permite DLQ funcionar ao lançar AmqpRejectAndDontRequeueException
+        acknowledge-mode: auto
+        concurrency: 1
+        max-concurrency: 4
+        prefetch: 10
+
+# ==== Filas usadas (RabbitConfig lê essas chaves) ====
+app:
+  queues:
+    entrada: pedidos.entrada.ricardo
+    entradaDlq: pedidos.entrada.ricardo.dlq
+    statusSucesso: pedidos.status.sucesso.ricardo
+    statusFalha: pedidos.status.falha.ricardo
+
+# ==== Swagger/OpenAPI (springdoc) ====
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+    display-request-duration: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.amqp: DEBUG
+    org.springframework.rabbit: DEBUG
+    com.ricardo.pedidos_backend: DEBUG
