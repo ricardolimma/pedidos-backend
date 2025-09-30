@@ -2,15 +2,19 @@
 
 API responsável por **receber pedidos**, responder `202 Accepted` com o **ID do pedido**, **processar assíncrono** (RabbitMQ) e expor **status por HTTP**.
 
+> 🖥️ **Interface gráfica disponível:** este backend é consumido por um **cliente Desktop (Java 8 + Swing)** que envia pedidos e faz polling do status.  
+> Repositório do cliente: **<https://github.com/ricardolimma/pedidos-swing>**  
+> Sem o backend rodando, a interface não funciona.
+
 ## Sumário
 - [Arquitetura](#arquitetura)
 - [Pré-requisitos](#pré-requisitos)
 - [Configuração](#configuração)
+- [Como rodar](#como-rodar)
 - [Endpoints](#endpoints)
 - [Mensageria (RabbitMQ)](#mensageria-rabbitmq)
+- [Cliente Desktop (Swing)](#cliente-desktop-swing)
 - [Logs & Observabilidade](#logs--observabilidade)
-- [Problemas comuns](#problemas-comuns)
-- [Estrutura do projeto](#estrutura-do-projeto)
 
 ---
 
@@ -82,6 +86,21 @@ springdoc:
 >     virtual-host: <vhost>
 > ```
 > Se sua instância exigir TLS, use `addresses: amqps://user:pass@host/vhost`.
+
+---
+
+## Como rodar
+```bash
+
+#Subir a aplicação
+mvn spring-boot:run
+
+# Alternativa: empacotar
+mvn -q clean package
+java -jar target/pedidos-backend-*.jar
+```
+
+---
 
 ## Endpoints
 
@@ -160,6 +179,22 @@ curl -s http://localhost:8080/api/pedidos/status/3b5a2b7e-7b0b-4c2a-a9b4-2d6a4a2
 
 ---
 
+## Cliente Desktop (Swing)
+
+Há um **cliente Java 8 (Swing)** que consome estes endpoints e exibe os pedidos em uma tabela com atualização periódica (polling).
+
+- **Repositório**: **<https://github.com/ricardolimma/pedidos-swing>**
+- **Tecnologias**: Java 8, Swing, OkHttp, Jackson, `ScheduledExecutorService`
+- **Configuração do cliente**: por padrão usa `http://localhost:8080/api/pedidos`.  
+  Para apontar para outro host, edite a constante `baseUrl` em `OrderClientFrame.java`.
+
+Fluxo no cliente:
+1. Envia `POST /api/pedidos` com `{produto, quantidade}` e lê o `id` retornado (`202 Accepted`).
+2. Faz polling de `GET /api/pedidos/status/{id}` até o status ser **SUCESSO** ou **FALHA**.
+3. Exibe, em caso de falha, o campo `mensagemErro` devolvido pelo backend.
+
+---
+
 ## Logs & Observabilidade
 Níveis úteis no `application.yaml`:
 ```yaml
@@ -171,18 +206,4 @@ logging:
     com.seu.pacote: DEBUG
 ```
 No painel do **RabbitMQ/CloudAMQP**, você pode verificar **enfileiramento**, **consumo** e mensagens na **DLQ**.
-
----
-
-
-## Problemas comuns
-- **Status não muda para SUCESSO/FALHA**  
-  Verifique se o **cliente usa o ID retornado** no `202` para fazer o polling. Se o front gerar outro ID, o status nunca vai casar.
-- **DLQ vazia mesmo com falhas**  
-  Confirme `default-requeue-rejected: false` e o `throw new AmqpRejectAndDontRequeueException(...)` no consumidor.
-- **Conexão no RabbitMQ**  
-  Confira host/usuário/senha/vhost. Em CloudAMQP, valide se o IP tem permissão de acesso e se o vhost está correto.
-- **YAML inválido**  
-  Indentação incorreta quebra o boot. Use espaços (não TAB).
-
 
