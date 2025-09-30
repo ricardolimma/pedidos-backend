@@ -9,7 +9,6 @@ API responsável por **receber pedidos**, responder `202 Accepted` com o **ID do
 - [Endpoints](#endpoints)
 - [Mensageria (RabbitMQ)](#mensageria-rabbitmq)
 - [Logs & Observabilidade](#logs--observabilidade)
-- [Testes](#testes)
 - [Problemas comuns](#problemas-comuns)
 - [Estrutura do projeto](#estrutura-do-projeto)
 
@@ -175,11 +174,6 @@ No painel do **RabbitMQ/CloudAMQP**, você pode verificar **enfileiramento**, **
 
 ---
 
-## Testes
-- **Unit tests**: validar que o publisher envia para a fila correta (ex.: verificar `RabbitTemplate.convertAndSend("", <fila>, <payload>)`).
-- **Integração** (opcional): com broker real ou `Testcontainers` (se permitido).
-
----
 
 ## Problemas comuns
 - **Status não muda para SUCESSO/FALHA**  
@@ -190,4 +184,5 @@ No painel do **RabbitMQ/CloudAMQP**, você pode verificar **enfileiramento**, **
   Confira host/usuário/senha/vhost. Em CloudAMQP, valide se o IP tem permissão de acesso e se o vhost está correto.
 - **YAML inválido**  
   Indentação incorreta quebra o boot. Use espaços (não TAB).
+
 
