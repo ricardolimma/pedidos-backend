@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: Pedidos API
+  version: 1.0.0
+  description: API responsável por processamento de pedidos.
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Pedido
+    description: Endpoints de pedidos
+
+paths:
+  /pedidos:
+    get:
+      tags: [Pedido]
+      summary: Lista pedidos com paginação
+      operationId: listPedidos
+      parameters:
+        - name: page
+          in: query
+          description: Número da página (base 0)
+          schema: { type: integer, format: int32, minimum: 0, default: 0 }
+        - name: size
+          in: query
+          description: Tamanho da página
+          schema: { type: integer, format: int32, minimum: 1, default: 20 }
+        - name: sort
+          in: query
+          description: Campo de ordenação (ex. "createdAt,desc")
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedido'
+    post:
+      tags: [Pedido]
+      summary: Cria um pedido
+      operationId: createPedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoCreate'
+      responses:
+        '201':
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          description: Requisição inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+
+  /pedidos/{id}:
+    get:
+      tags: [Pedido]
+      summary: Busca um pedido por ID
+      operationId: getPedidoById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+    delete:
+      tags: [Pedido]
+      summary: Remove um pedido por ID
+      operationId: deletePedido
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Removido
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+
+  /pedidos/{id}/status:
+    put:
+      tags: [Pedido]
+      summary: Atualiza o status do pedido
+      operationId: updateStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizaStatusRequest'
+      responses:
+        '200':
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          description: Requisição inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+
+components:
+  schemas:
+    StatusPedido:
+      type: string
+      enum: [CRIADO, PROCESSANDO, CONCLUIDO, CANCELADO]
+
+    ItemPedido:
+      type: object
+      required: [sku, quantidade]
+      properties:
+        sku:
+          type: string
+          example: "ABC-123"
+        quantidade:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
+        precoUnitario:
+          type: number
+          format: double
+          example: 19.9
+
+    Pedido:
+      type: object
+      required: [id, status, itens, createdAt]
+      properties:
+        id:
+          type: string
+          example: "ped_12345"
+        status:
+          $ref: '#/components/schemas/StatusPedido'
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPedido'
+        total:
+          type: number
+          format: double
+          example: 59.7
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-09-29T12:00:00Z"
+
+    PedidoCreate:
+      type: object
+      required: [itens]
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPedido'
+
+    AtualizaStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusPedido'
+
+    Problema:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          format: int32
+          example: 400
+        error:
+          type: string
+          example: "Bad Request"
+        message:
+          type: string
+          example: "Campo itens é obrigatório"
+        path:
+          type: string
+          example: "/pedidos"
